@@ -2,7 +2,7 @@
 
 Dự án phát triển ứng dụng Web quản lý Danh mục (Category) và Sản phẩm (Product) sử dụng **Spring Boot**, **Spring GraphQL**, **Thymeleaf**, **AJAX (jQuery)** và cơ sở dữ liệu **SQL Server**.
 
-## 🚀 Tính năng chính
+## Tính năng chính
 
 1. **Trang chủ (Home Page):**
    - **Hiển thị sản phẩm sắp xếp theo giá từ thấp đến cao (Sort Price ASC)**: Được kích hoạt linh hoạt qua GraphQL Query và AJAX.
@@ -24,7 +24,7 @@ Dự án phát triển ứng dụng Web quản lý Danh mục (Category) và S�
 
 ---
 
-## 🛠️ Công nghệ sử dụng
+## Công nghệ sử dụng
 
 - **Backend Framework**: Spring Boot 4.x / Spring Framework 7
 - **Data Persistence**: Spring Data JPA, Hibernate ORM (`jakarta.persistence.*`)
@@ -36,7 +36,7 @@ Dự án phát triển ứng dụng Web quản lý Danh mục (Category) và S�
 
 ---
 
-## 📂 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```
 springboot1-9/
@@ -63,7 +63,7 @@ springboot1-9/
 
 ---
 
-## ⚙️ Cài đặt & Chạy ứng dụng
+## Cài đặt & Chạy ứng dụng
 
 ### 1. Cơ sở dữ liệu SQL Server
 - Tài khoản: `sa` / Mật khẩu: `123456`

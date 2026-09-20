@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <nav th:fragment="navbar(activeTab)" class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-info" href="/">
+                <i class="fa-solid fa-diagram-project me-2"></i>Spring GraphQL Store
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${activeTab == 'home' ? 'active fw-bold' : ''}" href="/home">
+                            <i class="fa-solid fa-house me-1"></i> Trang chủ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${activeTab == 'products' ? 'active fw-bold' : ''}" href="/admin/products">
+                            <i class="fa-solid fa-box-open me-1"></i> Quản lý Sản phẩm
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${activeTab == 'categories' ? 'active fw-bold' : ''}" href="/admin/categories">
+                            <i class="fa-solid fa-folder-tree me-1"></i> Quản lý Danh mục
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-outline-warning btn-sm" href="/graphiql" target="_blank">
+                            <i class="fa-solid fa-bolt me-1"></i> GraphiQL UI
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>

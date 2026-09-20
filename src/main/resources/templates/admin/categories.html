@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh mục - Spring GraphQL</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .page-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navbar Fragment -->
+    <div th:replace="~{fragments/navbar :: navbar('categories')}"></div>
+
+    <!-- Page Header -->
+    <div class="page-header shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-folder-tree text-primary me-2"></i>Quản lý Danh mục</h2>
+                <span class="text-muted small">Thực hiện CRUD, Tìm kiếm & Phân trang với Spring GraphQL API</span>
+            </div>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+                <i class="fa-solid fa-plus me-1"></i> Thêm Danh mục mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mb-5">
+        <!-- Search & Control Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                            <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Nhập tên danh mục cần tìm kiếm...">
+                            <button id="btnSearch" class="btn btn-primary px-4">Tìm kiếm</button>
+                            <button id="btnReset" class="btn btn-outline-secondary">Đặt lại</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end text-muted small">
+                        <span id="totalInfo">Đang tải thông tin...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Table -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 80px;" class="text-center">ID</th>
+                                <th>Tên danh mục</th>
+                                <th>Icon</th>
+                                <th style="width: 140px;" class="text-center">Trạng thái</th>
+                                <th style="width: 160px;" class="text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    <span class="ms-2 text-muted">Đang tải dữ liệu từ GraphQL...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Pagination Footer -->
+            <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-3">
+                <div class="small text-muted" id="pageInfo">Trang 1 / 1</div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" id="pagination">
+                        <!-- Dynamic pagination buttons -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL THÊM CATEGORY -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="createCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fa-solid fa-plus-circle me-1"></i> Thêm Danh mục mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createCategoryForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên danh mục <span class="text-danger">*</span></label>
+                            <input type="text" id="newCategoryName" class="form-control" required placeholder="Ví dụ: Thiết bị thông minh">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Icon file name</label>
+                            <input type="text" id="newIcon" class="form-control" placeholder="Ví dụ: smart.png">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            <select id="newStatus" class="form-select">
+                                <option value="1">1 - Đang hoạt động</option>
+                                <option value="0">0 - Tạm ngừng</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="btnSaveCategory" class="btn btn-success">Thêm mới</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL CẬP NHẬT CATEGORY -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="updateCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fa-solid fa-pen-to-square me-1"></i> Cập nhật Danh mục</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateCategoryForm">
+                        <input type="hidden" id="editCategoryId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">ID Danh mục</label>
+                            <input type="text" id="editCategoryIdDisplay" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên danh mục <span class="text-danger">*</span></label>
+                            <input type="text" id="editCategoryName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Icon file name</label>
+                            <input type="text" id="editIcon" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            <select id="editStatus" class="form-select">
+                                <option value="1">1 - Đang hoạt động</option>
+                                <option value="0">0 - Tạm ngừng</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="btnUpdateCategory" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white py-3 border-top text-center text-muted small">
+        <div class="container">
+            Quản lý Danh mục với GraphQL API &bull; Spring Boot &bull; AJAX jQuery
+        </div>
+    </footer>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let currentPage = 0;
+        const pageSize = 5;
+        let currentSearch = "";
+
+        // Utility gọi GraphQL
+        function callGraphQL(query, variables = {}) {
+            return $.ajax({
+                url: '/graphql',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ query: query, variables: variables })
+            });
+        }
+
+        // Tải danh sách Category có phân trang và tìm kiếm
+        function loadCategories(page = 0, search = "") {
+            currentPage = page;
+            currentSearch = search;
+
+            const query = `
+                query GetCategories($page: Int, $size: Int, $search: String) {
+                    categories(page: $page, size: $size, search: $search) {
+                        content {
+                            categoryId
+                            categoryName
+                            icon
+                            status
+                        }
+                        totalPages
+                        totalElements
+                        currentPage
+                        pageSize
+                    }
+                }
+            `;
+
+            $('#categoryTableBody').html(`
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="ms-2 text-muted">Đang tải...</span>
+                    </td>
+                </tr>
+            `);
+
+            callGraphQL(query, { page: page, size: pageSize, search: search }).done(function(res) {
+                if (res.data && res.data.categories) {
+                    const pageData = res.data.categories;
+                    renderTable(pageData.content);
+                    renderPagination(pageData.currentPage, pageData.totalPages);
+                    $('#totalInfo').text(`Tổng số: ${pageData.totalElements} danh mục`);
+                    $('#pageInfo').text(`Trang ${pageData.currentPage + 1} / ${pageData.totalPages || 1}`);
+                }
+            }).fail(function(xhr, status, error) {
+                console.error("Lỗi:", error);
+                $('#categoryTableBody').html(`<tr><td colspan="5" class="text-danger text-center">Lỗi tải dữ liệu</td></tr>`);
+            });
+        }
+
+        // Render bảng HTML
+        function renderTable(categories) {
+            if (!categories || categories.length === 0) {
+                $('#categoryTableBody').html(`<tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy danh mục nào</td></tr>`);
+                return;
+            }
+
+            let html = '';
+            categories.forEach(cat => {
+                const statusBadge = (cat.status === 1) 
+                    ? '<span class="badge bg-success">Hoạt động</span>' 
+                    : '<span class="badge bg-secondary">Tạm ngừng</span>';
+
+                html += `
+                    <tr>
+                        <td class="text-center fw-bold text-secondary">${cat.categoryId}</td>
+                        <td class="fw-semibold text-dark">${cat.categoryName}</td>
+                        <td><code>${cat.icon || 'none'}</code></td>
+                        <td class="text-center">${statusBadge}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-warning me-1 btn-edit" 
+                                data-id="${cat.categoryId}" 
+                                data-name="${cat.categoryName}" 
+                                data-icon="${cat.icon || ''}" 
+                                data-status="${cat.status}">
+                                <i class="fa-solid fa-pen"></i> Sửa
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${cat.categoryId}">
+                                <i class="fa-solid fa-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#categoryTableBody').html(html);
+        }
+
+        // Render phân trang
+        function renderPagination(current, total) {
+            let html = '';
+            if (total <= 1) {
+                $('#pagination').empty();
+                return;
+            }
+
+            // Nút Prev
+            html += `<li class="page-item ${current === 0 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${current - 1}"><i class="fa-solid fa-chevron-left"></i></a>
+                     </li>`;
+
+            for (let i = 0; i < total; i++) {
+                html += `<li class="page-item ${i === current ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                         </li>`;
+            }
+
+            // Nút Next
+            html += `<li class="page-item ${current >= total - 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${current + 1}"><i class="fa-solid fa-chevron-right"></i></a>
+                     </li>`;
+
+            $('#pagination').html(html);
+        }
+
+        $(document).ready(function() {
+            // Tải dữ liệu ban đầu
+            loadCategories();
+
+            // Tìm kiếm
+            $('#btnSearch').click(function() {
+                const search = $('#searchInput').val();
+                loadCategories(0, search);
+            });
+
+            $('#searchInput').keyup(function(e) {
+                if (e.key === 'Enter') {
+                    $('#btnSearch').click();
+                }
+            });
+
+            $('#btnReset').click(function() {
+                $('#searchInput').val('');
+                loadCategories(0, '');
+            });
+
+            // Chuyển trang
+            $(document).on('click', '.page-link', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                if (page !== undefined && page >= 0) {
+                    loadCategories(page, currentSearch);
+                }
+            });
+
+            // Thêm mới Category (Mutation)
+            $('#btnSaveCategory').click(function() {
+                const name = $('#newCategoryName').val().trim();
+                const icon = $('#newIcon').val().trim();
+                const status = parseInt($('#newStatus').val());
+
+                if (!name) {
+                    alert("Vui lòng nhập tên danh mục!");
+                    return;
+                }
+
+                const mutation = `
+                    mutation CreateCat($input: CategoryInput!) {
+                        createCategory(input: $input) {
+                            categoryId
+                            categoryName
+                        }
+                    }
+                `;
+
+                callGraphQL(mutation, {
+                    input: {
+                        categoryName: name,
+                        icon: icon,
+                        status: status
+                    }
+                }).done(function(res) {
+                    if (res.data && res.data.createCategory) {
+                        $('#createCategoryModal').modal('hide');
+                        $('#createCategoryForm')[0].reset();
+                        loadCategories(0, currentSearch);
+                    }
+                }).fail(function(xhr, status, error) {
+                    alert("Lỗi khi thêm danh mục: " + error);
+                });
+            });
+
+            // Mở Modal Sửa
+            $(document).on('click', '.btn-edit', function() {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+                const icon = $(this).data('icon');
+                const status = $(this).data('status');
+
+                $('#editCategoryId').val(id);
+                $('#editCategoryIdDisplay').val(id);
+                $('#editCategoryName').val(name);
+                $('#editIcon').val(icon);
+                $('#editStatus').val(status);
+
+                $('#updateCategoryModal').modal('show');
+            });
+
+            // Cập nhật Category (Mutation)
+            $('#btnUpdateCategory').click(function() {
+                const id = $('#editCategoryId').val();
+                const name = $('#editCategoryName').val().trim();
+                const icon = $('#editIcon').val().trim();
+                const status = parseInt($('#editStatus').val());
+
+                if (!name) {
+                    alert("Vui lòng nhập tên danh mục!");
+                    return;
+                }
+
+                const mutation = `
+                    mutation UpdateCat($id: ID!, $input: CategoryInput!) {
+                        updateCategory(id: $id, input: $input) {
+                            categoryId
+                            categoryName
+                            icon
+                            status
+                        }
+                    }
+                `;
+
+                callGraphQL(mutation, {
+                    id: id,
+                    input: {
+                        categoryName: name,
+                        icon: icon,
+                        status: status
+                    }
+                }).done(function(res) {
+                    if (res.data && res.data.updateCategory) {
+                        $('#updateCategoryModal').modal('hide');
+                        loadCategories(currentPage, currentSearch);
+                    }
+                }).fail(function(xhr, status, error) {
+                    alert("Lỗi khi cập nhật danh mục: " + error);
+                });
+            });
+
+            // Xóa Category (Mutation)
+            $(document).on('click', '.btn-delete', function() {
+                const id = $(this).data('id');
+                if (confirm(`Bạn có chắc chắn muốn xóa danh mục có ID: ${id} không?`)) {
+                    const mutation = `
+                        mutation DeleteCat($id: ID!) {
+                            deleteCategory(id: $id)
+                        }
+                    `;
+
+                    callGraphQL(mutation, { id: id }).done(function(res) {
+                        if (res.data && res.data.deleteCategory) {
+                            loadCategories(currentPage, currentSearch);
+                        } else {
+                            alert("Không thể xóa danh mục này (có thể do ràng buộc dữ liệu)");
+                        }
+                    }).fail(function(xhr, status, error) {
+                        alert("Lỗi xóa danh mục: " + error);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
